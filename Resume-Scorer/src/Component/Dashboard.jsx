@@ -29,7 +29,7 @@ const Dashboard = () => {
     formData.append("resume", resumeFile);
     formData.append("job_description", jobDesc);
 
-    formData.append("user", userInfo._id);
+    formData.append("user", userInfo?._id);
     try {
       const response = await axios.post("/api/resume/AnalyzeResume", formData);
 

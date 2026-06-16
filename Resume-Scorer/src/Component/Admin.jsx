@@ -64,7 +64,7 @@ const Admin = () => {
         {!loading &&
           users.map((user) => (
             <div
-              key={user._id}
+              key={user?._id}
               className="bg-white p-4 sm:p-5 rounded-md shadow-md"
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

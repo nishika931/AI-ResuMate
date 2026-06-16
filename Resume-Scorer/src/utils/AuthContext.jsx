@@ -1,12 +1,29 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
+import axios from "../utils/axios";
 
 export const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
-  var login=localStorage.getItem('isLogin');
-  var userInfoData=localStorage.getItem("userInfo");
-  const [isLogin, setLogin] = useState(login === "true");
-  const[userInfo,setUserInfo]=useState(userInfoData?JSON.parse(userInfoData):null);
+  const [isLogin, setLogin] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const res = await axios.get("/api/user");
+        setUserInfo(res.data);
+        setLogin(true);
+      } catch (error) {
+        setUserInfo(null);
+        setLogin(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -15,6 +32,7 @@ const AuthProvider = ({ children }) => {
         setLogin,
         userInfo,
         setUserInfo,
+        loading,
       }}
     >
       {children}
