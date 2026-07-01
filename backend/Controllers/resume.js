@@ -102,10 +102,20 @@ RULES (VERY IMPORTANT):
 
     console.log(response);
 
-    const result = response.text || response?.message || "";
+    const result = response.text || response?.message?.content?.[0]?.text || "";
 
-    const aiData = JSON.parse(result);
+    let aiData;
 
+try {
+  aiData = JSON.parse(result);
+} catch (err) {
+  console.log("RAW AI OUTPUT:", result);
+
+  return res.status(500).json({
+    error: "AI returned invalid JSON",
+    raw: result,
+  });
+}
     console.log("user =", user);
     console.log("req.user =", req.user);
 
