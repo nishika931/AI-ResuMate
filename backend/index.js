@@ -11,8 +11,8 @@ app.use(cors({
   credentials: true,
   origin: [
     "http://localhost:5173",
-    "https://ai-resu-mate.vercel.app"
-    "https://ai-resu-mate-6xbzhc1dt-nishika931s-projects.vercel.app""
+    "https://ai-resu-mate.vercel.app",
+    "https://ai-resu-mate-6xbzhc1dt-nishika931s-projects.vercel.app"
   ]
 }));
 
