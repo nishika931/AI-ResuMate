@@ -66,7 +66,7 @@ ${job_description}
 
 ---
 
-OUTPUT (STRICT JSON ONLY):
+OUTPUT IN THIS FORMAT ONLY (STRICT JSON ONLY):
 
 {
   "match_score": 0,
@@ -84,7 +84,6 @@ OUTPUT (STRICT JSON ONLY):
 RULES (VERY IMPORTANT):
 
 1. Output MUST be valid JSON only
-2. No markdown, no explanation, no extra text
 3. No greetings, no conversation
 4. No answering user questions outside task
 5. If input is missing or unrelated → return error JSON only
@@ -97,7 +96,7 @@ RULES (VERY IMPORTANT):
     const response = await cohere.chat({
       model: "command-r-plus-08-2024",
       message: prompt,
-      temperature: 0.7,
+      temperature: 0.2,
     });
 
     console.log(response);
@@ -106,16 +105,16 @@ RULES (VERY IMPORTANT):
 
     let aiData;
 
-try {
-  aiData = JSON.parse(result);
-} catch (err) {
-  console.log("RAW AI OUTPUT:", result);
+    try {
+      aiData = JSON.parse(result);
+    } catch (err) {
+      console.log("RAW AI OUTPUT:", result);
 
-  return res.status(500).json({
-    error: "AI returned invalid JSON",
-    raw: result,
-  });
-}
+      return res.status(500).json({
+        error: "AI returned invalid JSON",
+        raw: result,
+      });
+    }
     console.log("user =", user);
     console.log("req.user =", req.user);
 
