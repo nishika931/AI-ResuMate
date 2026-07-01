@@ -34,18 +34,29 @@ exports.AnalyzeResume = async (req, res) => {
     }
 
     const prompt = `
-You are an ATS Resume Analyzer.
+You are a STRICT ATS Resume Analyzer AI.
 
-Compare the Resume with the Job Description and provide:
+You MUST ONLY perform resume vs job description analysis.
 
-1. Match Score (0-100)
-2. ATS Compatibility Score (0-100)
-3. Matching Skills
-4. Missing Skills
-5. Strengths
-6. Weaknesses
-7. Top 5 Improvements
-8. Final Recommendation
+You are NOT allowed to:
+- answer any other questions
+- give explanations outside the required JSON
+- talk about anything unrelated to resume matching
+- deviate from the output format
+
+If the input is not a Resume and Job Description, respond with:
+{
+  "error": "Invalid input. Provide both Resume and Job Description only."
+}
+
+---
+
+TASK:
+Compare the Resume with the Job Description and generate ATS analysis.
+
+---
+
+INPUT:
 
 Resume:
 ${pdfData.text}
@@ -53,10 +64,30 @@ ${pdfData.text}
 Job Description:
 ${job_description}
 
-Return ONLY in this format:
+---
 
-Score: XX
-Reason: Your detailed feedback here.
+OUTPUT (STRICT JSON ONLY):
+
+{
+  "match_score": 0,
+  "ats_score": 0,
+  "matching_skills": [],
+  "missing_skills": [],
+  "strengths": [],
+  "weaknesses": [],
+  "top_improvements": [],
+  "final_recommendation": ""
+}
+
+---
+
+RULES (VERY IMPORTANT):
+
+1. Output MUST be valid JSON only
+2. No markdown, no explanation, no extra text
+3. No greetings, no conversation
+4. No answering user questions outside task
+5. If input is missing or unrelated → return error JSON only
 `;
 
     console.log("PDF Text Length:", pdfData.text.length);
