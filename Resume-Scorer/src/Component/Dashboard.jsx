@@ -137,13 +137,13 @@ const Dashboard = () => {
             // RESULT STATE
             <>
               <div className="flex items-center gap-3 text-2xl font-semibold">
-                <span>{result.score}%</span>
+                <span>{result.resume_score}%</span>
                 <MdCreditScore className="text-3xl" />
               </div>
 
               <div>
                 <h3 className="font-bold mb-2">Feedback:</h3>
-                <p className="text-sm">{result.feedback}</p>
+                <p className="text-sm">{result.feedback || "No feedback generated"}</p>
               </div>
             </>
           ) : (
