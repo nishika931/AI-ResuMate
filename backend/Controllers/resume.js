@@ -102,17 +102,9 @@ RULES (VERY IMPORTANT):
 
     console.log(response);
 
-    const result = response.text || "";
+    const result = response.text || response?.message || "";
 
-    // Extract score
-    const scoreMatch = result.match(/Score:\s*(\d+)/i);
-    const score = scoreMatch ? Number(scoreMatch[1]) : 0;
-
-    // Extract reason
-    const reasonMatch = result.match(/Reason:\s*([\s\S]*)/i);
-    const reason = reasonMatch
-      ? reasonMatch[1].trim()
-      : "No feedback generated.";
+    const aiData = JSON.parse(result);
 
     console.log("user =", user);
     console.log("req.user =", req.user);
@@ -121,8 +113,8 @@ RULES (VERY IMPORTANT):
       user,
       resume_name: req.file.originalname,
       job_description,
-      resume_score: score,
-      feedback: reason,
+      resume_score: aiData.match_score,
+      feedback: aiData.final_recommendation,
     });
 
     await newResume.save();
