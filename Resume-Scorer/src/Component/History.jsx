@@ -21,6 +21,7 @@ const History = () => {
       try {
         const res = await axios.get(`/api/resume/get/${userInfo._id}`);
         setData(res.data.resumes || []);
+        console.log(data)
       } catch (err) {
         console.log(err);
         setError("Failed to load history");
@@ -67,7 +68,7 @@ const History = () => {
             <div
               key={item._id}
               className="bg-white p-4 sm:p-5 rounded-md shadow-md"
-            >
+            > 
               {/* HEADER */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <h2 className="font-semibold text-sm sm:text-base">
@@ -75,7 +76,7 @@ const History = () => {
                 </h2>
 
                 <div className="flex items-center gap-1 text-lg font-bold">
-                  {(item.match_score ?? 0)}%
+                  {(item.match_score ?? item.resume_score ?? 0)}%
                   <MdCreditScore />
                 </div>
               </div>
@@ -92,7 +93,7 @@ const History = () => {
                 <div className="mt-4 space-y-3">
                   <div>
                     <h3 className="font-bold">ATS Score</h3>
-                    <p>{item.ats_score ?? 0}%</p>
+                    <p>{(item.ats_score ?? 0)}%</p>
                   </div>
 
                   <div>

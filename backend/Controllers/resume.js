@@ -9,17 +9,12 @@ const cohere = new CohereClient({
   token: process.env.COHERE_API_KEY,
 });
 
-console.log("COHERE KEY:", process.env.COHERE_API_KEY);
-
 exports.AnalyzeResume = async (req, res) => {
-  console.log("AnalyzeResume controller started");
   let pdfPath;
 
   try {
     if (!req.file) {
-      return res.status(400).json({
-        error: "No resume uploaded",
-      });
+      return res.status(400).json({ error: "No resume uploaded" });
     }
 
     pdfPath = req.file.path;
@@ -28,52 +23,48 @@ exports.AnalyzeResume = async (req, res) => {
     const pdfData = await pdfParse(dataBuffer);
 
     const { job_description, user } = req.body;
-    if (!user) {
+
+    if (!user || !job_description) {
       return res.status(400).json({
-        error: "User is required",
+        error: "User and Job Description are required",
       });
     }
 
+    // ================= PROMPT =================
+    console.log("🔥 AnalyzeResume API CALLED");
     const prompt = `
-You are a STRICT ATS Resume Analyzer AI.
-
-You MUST ONLY perform resume vs job description analysis.
-
-You are NOT allowed to:
-- answer any other questions
-- give explanations outside the required JSON
-- talk about anything unrelated to resume matching
-- deviate from the output format
-
-If the input is not a Resume and Job Description, respond with:
-{
-  "error": "Invalid input. Provide both Resume and Job Description only."
-}
-
----
+You are an expert ATS Resume Analyzer.
 
 TASK:
-Compare the Resume with the Job Description and generate ATS analysis.
-match_score MUST be an integer from 0 to 100.
-ats_score MUST be an integer from 0 to 100.
+Compare Resume and Job Description and generate strict ATS evaluation.
 
----
+SCORING RULES:
+- Start from 100
+- Deduct 10–20 for each missing important skill
+- Deduct for weak experience relevance
+- Add +5 to +10 for strong matching skills
+- Be strict and realistic (NO default scores like 50–60)
 
-INPUT:
+MATCH SCORE GUIDE:
+- 90–100: Excellent match
+- 70–89: Strong match
+- 50–69: Average match
+- Below 50: Weak match
 
-Resume:
-${pdfData.text}
+ATS SCORE:
+- Based on keyword match with job description
+- Realistic evaluation required
 
-Job Description:
-${job_description}
+IMPORTANT:
+- Do NOT be vague
+- Do NOT return default values
+- Be precise and realistic
 
----
-
-OUTPUT IN THIS FORMAT ONLY (STRICT JSON ONLY):
+OUTPUT MUST BE ONLY VALID JSON:
 
 {
-  "match_score": 60,
-  "ats_score": 70,
+  "match_score": 0,
+  "ats_score": 0,
   "matching_skills": [],
   "missing_skills": [],
   "strengths": [],
@@ -82,48 +73,37 @@ OUTPUT IN THIS FORMAT ONLY (STRICT JSON ONLY):
   "final_recommendation": ""
 }
 
----
+Resume:
+${pdfData.text}
 
-RULES (VERY IMPORTANT):
-
-1. Output MUST be valid JSON only
-3. No greetings, no conversation
-4. No answering user questions outside task
-5. If input is missing or unrelated → return error JSON only
+Job Description:
+${job_description}
 `;
 
-    console.log("PDF Text Length:", pdfData.text.length);
-    console.log("Job Description:", job_description);
-
-    // Cohere API Call
+    // ================= COHERE CALL =================
     const response = await cohere.chat({
       model: "command-r-plus-08-2024",
       message: prompt,
-      temperature: 0.2,
+      temperature: 0.3,
     });
 
-    console.log("=== COHERE RESPONSE ===");
-    console.log(response);
-
-    const result = response.text || response?.message?.content?.[0]?.text || "";
-
-    console.log("=== RESULT ===");
-    console.log(result);
+    const rawText =
+      response?.text || response?.message?.content?.[0]?.text || "";
 
     let aiData;
 
     try {
-      aiData = JSON.parse(result);
+      aiData = JSON.parse(rawText);
     } catch (err) {
-      console.log("RAW AI OUTPUT:", result);
+      console.log("❌ RAW AI OUTPUT:", rawText);
 
       return res.status(500).json({
         error: "AI returned invalid JSON",
-        raw: result,
+        raw: rawText,
       });
     }
-    console.log("user =", user);
 
+    // ================= SAVE TO DB =================
     const newResume = new ResumeModel({
       user,
       resume_name: req.file.originalname,
@@ -144,7 +124,8 @@ RULES (VERY IMPORTANT):
 
     await newResume.save();
 
-    res.status(200).json({
+    // ================= RESPONSE =================
+    return res.status(200).json({
       success: true,
       message: "Resume analysis completed",
       data: aiData,
@@ -152,7 +133,7 @@ RULES (VERY IMPORTANT):
   } catch (err) {
     console.error("Resume Analysis Error:", err);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: "Server Error",
       message: err.message,
     });
@@ -163,51 +144,51 @@ RULES (VERY IMPORTANT):
   }
 };
 
+// ================= HISTORY =================
 exports.getAllResumeForUser = async (req, res) => {
   try {
     const { user } = req.params;
 
-    if (!user || user === "undefined") {
-      return res.status(400).json({
-        error: "Invalid user id",
-      });
+    if (!user) {
+      return res.status(400).json({ error: "Invalid user id" });
     }
 
-    let resumes = await ResumeModel.find({ user: user }).sort({
+    const resumes = await ResumeModel.find({ user }).sort({
       createdAt: -1,
     });
 
     return res.status(200).json({
-      message: "your previous history",
-      resumes: resumes,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      error: "server error",
-      message: err.message,
-    });
-  }
-};
-
-exports.getResumeForAdmin = async (req, res) => {
-  try {
-    let resumes = await ResumeModel.find({})
-      .populate("user")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      message: "fetched all history",
+      message: "User history fetched",
       resumes,
     });
   } catch (err) {
     return res.status(500).json({
-      error: "server error",
+      error: "Server error",
       message: err.message,
     });
   }
 };
 
+// ================= ADMIN =================
+exports.getResumeForAdmin = async (req, res) => {
+  try {
+    const resumes = await ResumeModel.find({})
+      .populate("user")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      message: "All resumes fetched",
+      resumes,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: "Server error",
+      message: err.message,
+    });
+  }
+};
+
+// ================= DELETE =================
 exports.deleteResume = async (req, res) => {
   try {
     await ResumeModel.findByIdAndDelete(req.params.id);

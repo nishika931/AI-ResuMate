@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const instance=axios.create({
-    baseURL: "https://ai-resumate.onrender.com"
+    baseURL: "ttp://localhost:4000"
 })
 
 export default instance;

@@ -7,29 +7,15 @@ const Admin = () => {
   const [users, setUsers] = useState([]);
   const [selectedResume, setSelectedResume] = useState(null);
 
-  const handleDelete = async (id) => {
-    console.log("Delete clicked:", id);
-
-    try {
-      await axios.delete(`/api/resume/${id}`);
-      console.log("Deleted");
-
-      setUsers(users.filter((item) => item._id !== id));
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const result = await axios.get("/api/resume/get");
+        const res = await axios.get("/api/resume/get");
 
-        console.log(result.data);
-
-        setUsers(result.data.resumes);
+        setUsers(res.data.resumes || []);
       } catch (err) {
         console.log(err);
+        setUsers([]);
       } finally {
         setLoading(false);
       }
@@ -38,16 +24,23 @@ const Admin = () => {
     fetchData();
   }, []);
 
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`/api/resume/${id}`);
+      setUsers((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] py-6 sm:py-10 px-4 flex flex-col items-center">
-      {/* TITLE */}
       <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center">
         Admin Dashboard
       </h1>
 
-      {/* CONTAINER */}
       <div className="w-full max-w-3xl space-y-4">
-        {/* SKELETON */}
+        {/* LOADING */}
         {loading &&
           Array.from({ length: 3 }).map((_, i) => (
             <div
@@ -60,40 +53,41 @@ const Admin = () => {
             </div>
           ))}
 
-        {/* USER LIST */}
+        {/* LIST */}
         {!loading &&
-          users.map((user) => (
+          users.map((item) => (
             <div
-              key={user?._id}
+              key={item._id}
               className="bg-white p-4 sm:p-5 rounded-md shadow-md"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
-                  <h2 className="font-semibold text-sm sm:text-base">
-                    {user.user?.name}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    {user.user?.email}
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    Resume: {user.resume_name}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Joined: {new Date(user.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
+              <div>
+                <h2 className="font-semibold text-sm sm:text-base">
+                  {item.user?.name}
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  {item.user?.email}
+                </p>
+
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Resume: {item.resume_name}
+                </p>
+
+                <p className="text-xs text-gray-400">
+                  {new Date(item.createdAt).toLocaleDateString("en-IN")}
+                </p>
               </div>
 
-              {/* ACTION BUTTONS */}
+              {/* ACTIONS */}
               <div className="mt-3 flex gap-2">
                 <button
-                  onClick={() => setSelectedResume(user)}
+                  onClick={() => setSelectedResume(item)}
                   className="px-3 py-1 text-xs sm:text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
                   View
                 </button>
+
                 <button
-                  onClick={() => handleDelete(user._id)}
+                  onClick={() => handleDelete(item._id)}
                   className="px-3 py-1 text-xs sm:text-sm bg-red-500 text-white rounded hover:bg-red-600"
                 >
                   Delete
@@ -105,23 +99,72 @@ const Admin = () => {
         {/* EMPTY */}
         {!loading && users.length === 0 && (
           <p className="text-center text-gray-500 text-sm sm:text-base">
-            No users found
+            No resumes found
           </p>
         )}
       </div>
+
+      {/* MODAL */}
       {selectedResume && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center p-4">
-          <div className="bg-white p-5 rounded-lg max-w-2xl w-full">
-            <h2 className="text-xl font-bold mb-3">Resume Feedback</h2>
+          <div className="bg-white p-5 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
 
-            <p className="font-semibold">{selectedResume.resume_name}</p>
+            <h2 className="text-xl font-bold mb-3">
+              Resume Analysis
+            </h2>
 
-            <div className="mt-3 max-h-80 overflow-y-auto">
+            <p className="font-semibold">
+              {selectedResume.resume_name}
+            </p>
+
+            {/* SCORES */}
+            <div className="mt-3">
+              <p>
+                <b>Match Score:</b>{" "}
+                {(selectedResume.match_score ?? selectedResume.resume_score ?? 0)}%
+              </p>
+
+              <p>
+                <b>ATS Score:</b> {selectedResume.ats_score ?? 0}%
+              </p>
+            </div>
+
+            {/* FEEDBACK */}
+            <div className="mt-3">
               <p className="text-gray-700 whitespace-pre-wrap">
                 {selectedResume.feedback}
               </p>
             </div>
 
+            {/* SKILLS */}
+            <div className="mt-3">
+              <h3 className="font-bold">Matching Skills</h3>
+              <ul className="list-disc ml-5">
+                {(selectedResume.matching_skills ?? []).map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-2">
+              <h3 className="font-bold">Missing Skills</h3>
+              <ul className="list-disc ml-5">
+                {(selectedResume.missing_skills ?? []).map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-2">
+              <h3 className="font-bold">Top Improvements</h3>
+              <ul className="list-disc ml-5">
+                {(selectedResume.top_improvements ?? []).map((t, i) => (
+                  <li key={i}>{t}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* CLOSE */}
             <button
               onClick={() => setSelectedResume(null)}
               className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
