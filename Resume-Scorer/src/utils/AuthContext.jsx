@@ -1,5 +1,4 @@
 import { createContext, useState, useEffect } from "react";
-import axios from "../utils/axios";
 
 export const AuthContext = createContext();
 
@@ -9,20 +8,18 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const res = await axios.get("/api/user");
-        setUserInfo(res.data);
-        setLogin(true);
-      } catch (error) {
-        setUserInfo(null);
-        setLogin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const login = localStorage.getItem("isLogin");
+    const user = localStorage.getItem("userInfo");
 
-    loadUser();
+    if (login && user) {
+      setLogin(true);
+      setUserInfo(JSON.parse(user));
+    } else {
+      setLogin(false);
+      setUserInfo(null);
+    }
+
+    setLoading(false);
   }, []);
 
   return (

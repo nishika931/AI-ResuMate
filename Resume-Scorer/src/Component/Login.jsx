@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { auth, provider } from "../utils/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { AuthContext } from "../utils/AuthContext";
@@ -7,12 +7,21 @@ import axios from "../utils/axios";
 
 const Login = () => {
   const { isLogin, setLogin, userInfo, setUserInfo } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
   const handleLogin = async () => {
+    if (loading) return;
+
+    setLoading(true);
+
     try {
       const result = await signInWithPopup(auth, provider);
-      if (!result.user) return;
+
+      if (!result.user) {
+        setLoading(false);
+        return;
+      }
 
       const user = result.user;
 
@@ -21,32 +30,25 @@ const Login = () => {
         email: user.email,
       };
 
-      await axios
-        .post("/api/user", userData)
-        .then((response) => {
-          setUserInfo(response.data.user);
-          localStorage.setItem("userInfo", JSON.stringify(response.data.user));
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      const response = await axios.post("/api/user", userData);
+
+      setUserInfo(response.data.user);
+      localStorage.setItem("userInfo", JSON.stringify(response.data.user));
 
       setLogin(true);
-
       localStorage.setItem("isLogin", "true");
 
       navigate("/dashboard");
     } catch (error) {
-      console.log("Firebase Error:", error);
-      console.log("Code:", error.code);
-      console.log("Message:", error.message);
+      console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Dashboard Background */}
       <div className="absolute inset-0 blur-md scale-105">
-        
         <div className="h-full w-full bg-gradient-to-r from-purple-200 via-pink-100 to-blue-200"></div>
       </div>
 
@@ -78,6 +80,7 @@ const Login = () => {
           <button
             type="button"
             onClick={handleLogin}
+            disabled={loading}
             className="
             w-full
             flex

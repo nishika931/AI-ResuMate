@@ -12,19 +12,18 @@ const History = () => {
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
+    if (!userInfo?._id) return;
+
     const fetchUserData = async () => {
       setLoading(true);
+
       try {
-        const results = await axios.get(`/api/resume/get/${userInfo?._id}`);
+        const results = await axios.get(`/api/resume/get/${userInfo._id}`);
         console.log(results.data.resumes);
         setData(results.data.resumes);
       } catch (err) {
         console.log(err);
-
-        console.log(err);
-
-        setError("");
-
+        setError("Failed to load history");
         setData([]);
       } finally {
         setLoading(false);
@@ -83,6 +82,60 @@ const History = () => {
                   ? item.feedback
                   : `${item.feedback.slice(0, 100)}...`}
               </p>
+
+              {expandedId === item._id && (
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <h3 className="font-bold">ATS Score</h3>
+                    <p>{item.ats_score}%</p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold">Matching Skills</h3>
+                    <ul className="list-disc ml-5">
+                      {item.matching_skills?.map((skill, i) => (
+                        <li key={i}>{skill}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold">Missing Skills</h3>
+                    <ul className="list-disc ml-5">
+                      {item.missing_skills?.map((skill, i) => (
+                        <li key={i}>{skill}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold">Strengths</h3>
+                    <ul className="list-disc ml-5">
+                      {item.strengths?.map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold">Weaknesses</h3>
+                    <ul className="list-disc ml-5">
+                      {item.weaknesses?.map((w, i) => (
+                        <li key={i}>{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold">Top Improvements</h3>
+                    <ul className="list-disc ml-5">
+                      {item.top_improvements?.map((t, i) => (
+                        <li key={i}>{t}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={() =>

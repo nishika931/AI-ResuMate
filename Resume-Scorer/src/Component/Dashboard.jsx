@@ -25,13 +25,16 @@ const Dashboard = () => {
       setTimeout(() => setError(""), 3000);
       return;
     }
+
     const formData = new FormData();
     formData.append("resume", resumeFile);
     formData.append("job_description", jobDesc);
-
-    formData.append("user", userInfo?._id);
+    formData.append("user", userInfo._id);
     try {
       const response = await axios.post("/api/resume/AnalyzeResume", formData);
+      console.log(response.data);
+      console.log(response.data.data);
+      console.dir(response.data.data);
 
       setResult(response.data.data);
       setLoading(false);
@@ -111,7 +114,7 @@ const Dashboard = () => {
           </p>
         )}
       </div>
-      
+
       {/* RIGHT */}
       <div className="w-full md:w-1/2 h-screen bg-[#f5f5f5] flex flex-col items-center pt-20">
         <span className="font-bold text-3xl">Result</span>
@@ -137,13 +140,63 @@ const Dashboard = () => {
             // RESULT STATE
             <>
               <div className="flex items-center gap-3 text-2xl font-semibold">
-                <span>{result.resume_score}%</span>
+                <span>Match Score: {result.match_score}%</span>
                 <MdCreditScore className="text-3xl" />
               </div>
 
               <div>
-                <h3 className="font-bold mb-2">Feedback:</h3>
-                <p className="text-sm">{result.feedback || "No feedback generated"}</p>
+                <h3 className="font-bold">ATS Score</h3>
+                <p>{result.ats_score}%</p>
+              </div>
+
+              <div>
+                <h3 className="font-bold">Matching Skills</h3>
+                <ul className="list-disc ml-5">
+                  {result.matching_skills?.map((skill, i) => (
+                    <li key={i}>{skill}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-bold">Missing Skills</h3>
+                <ul className="list-disc ml-5">
+                  {result.missing_skills?.map((skill, i) => (
+                    <li key={i}>{skill}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-bold">Strengths</h3>
+                <ul className="list-disc ml-5">
+                  {result.strengths?.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-bold">Weaknesses</h3>
+                <ul className="list-disc ml-5">
+                  {result.weaknesses?.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-bold">Top Improvements</h3>
+                <ul className="list-disc ml-5">
+                  {result.top_improvements?.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-bold">Recommendation</h3>
+                <p>{result.final_recommendation}</p>
               </div>
             </>
           ) : (

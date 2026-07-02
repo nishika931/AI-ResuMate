@@ -12,6 +12,7 @@ const cohere = new CohereClient({
 console.log("COHERE KEY:", process.env.COHERE_API_KEY);
 
 exports.AnalyzeResume = async (req, res) => {
+  console.log("AnalyzeResume controller started");
   let pdfPath;
 
   try {
@@ -53,6 +54,8 @@ If the input is not a Resume and Job Description, respond with:
 
 TASK:
 Compare the Resume with the Job Description and generate ATS analysis.
+match_score MUST be an integer from 0 to 100.
+ats_score MUST be an integer from 0 to 100.
 
 ---
 
@@ -69,8 +72,8 @@ ${job_description}
 OUTPUT IN THIS FORMAT ONLY (STRICT JSON ONLY):
 
 {
-  "match_score": 0,
-  "ats_score": 0,
+  "match_score": 60,
+  "ats_score": 70,
   "matching_skills": [],
   "missing_skills": [],
   "strengths": [],
@@ -99,9 +102,13 @@ RULES (VERY IMPORTANT):
       temperature: 0.2,
     });
 
+    console.log("=== COHERE RESPONSE ===");
     console.log(response);
 
     const result = response.text || response?.message?.content?.[0]?.text || "";
+
+    console.log("=== RESULT ===");
+    console.log(result);
 
     let aiData;
 
@@ -116,13 +123,22 @@ RULES (VERY IMPORTANT):
       });
     }
     console.log("user =", user);
-    console.log("req.user =", req.user);
 
     const newResume = new ResumeModel({
       user,
       resume_name: req.file.originalname,
       job_description,
+
       resume_score: aiData.match_score,
+      ats_score: aiData.ats_score,
+
+      matching_skills: aiData.matching_skills,
+      missing_skills: aiData.missing_skills,
+
+      strengths: aiData.strengths,
+      weaknesses: aiData.weaknesses,
+
+      top_improvements: aiData.top_improvements,
       feedback: aiData.final_recommendation,
     });
 
@@ -131,7 +147,7 @@ RULES (VERY IMPORTANT):
     res.status(200).json({
       success: true,
       message: "Resume analysis completed",
-      data: newResume,
+      data: aiData,
     });
   } catch (err) {
     console.error("Resume Analysis Error:", err);
