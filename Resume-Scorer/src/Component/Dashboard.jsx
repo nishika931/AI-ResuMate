@@ -32,10 +32,6 @@ const Dashboard = () => {
     formData.append("user", userInfo._id);
     try {
       const response = await axios.post("/api/resume/AnalyzeResume", formData);
-      console.log(response.data);
-      console.log(response.data.data);
-      console.dir(response.data.data);
-
       setResult(response.data.data);
       setLoading(false);
     } catch (err) {
